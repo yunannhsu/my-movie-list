@@ -7,32 +7,42 @@
 
   const searchForm = document.getElementById('search')
   const searchInput = document.getElementById('search-input')
+  const modeSelector = document.getElementById('mode-selector')
+
   const pagination = document.getElementById('pagination')
   const ITEM_PER_PAGE = 12
+  let currentPage = 1
   let paginationData = []
-  const bar = document.querySelector('.fa fa-bars')
+  let displayMode = "mode_Card"
 
 
   axios.get(INDEX_URL).then((response) => {
     data.push(...response.data.results)
     getTotalPages(data)
-    //getPageData(1, data)
-    listDisplay(data)
+    getPageData(currentPage, data, displayMode)
   }).catch((err) => console.log(err))
-
 
 
   searchForm.addEventListener('submit', event => {
     event.preventDefault()
-
     let input = searchInput.value.toLowerCase()
     let results = data.filter(
       movie => movie.title.toLowerCase().includes(input)
     )
     console.log(results)
-    //displayDataList(results)
     getTotalPages(results)
-    getPageData(1, results)
+    display_Card(results)
+  })
+
+  modeSelector.addEventListener('click', (event) => {
+    if (event.target.matches('#mode-list')) {
+      displayMode = 'mode_Bar'
+      getPageData(currentPage, data, displayMode)
+    }
+    else if (event.target.matches('#mode-card')) {
+      displayMode = 'mode_Card'
+      getPageData(currentPage, data, displayMode)
+    }
   })
 
   dataPanel.addEventListener('click', (event) => {
@@ -47,7 +57,12 @@
   pagination.addEventListener('click', event => {
     console.log(event.target.dataset.page)
     if (event.target.tagName === 'A') {
-      getPageData(event.target.dataset.page)
+      if (displayMode === "mode_Bar") {
+        getPageData(event.target.dataset.page, data, displayMode)
+      }
+      else if (displayMode === "mode_Card") {
+        getPageData(event.target.dataset.page, data, displayMode)
+      }
     }
   })
 
@@ -65,35 +80,33 @@
     pagination.innerHTML = pageItemContent
   }
 
-  function getPageData(pageNum, data) {
+  function getPageData(pageNum, data, displayMode) {
+    currentPage = pageNum || currentPage
     paginationData = data || paginationData
     let offset = (pageNum - 1) * ITEM_PER_PAGE
     let pageData = paginationData.slice(offset, offset + ITEM_PER_PAGE)
-    displayDataList(pageData)
+    if (displayMode === 'mode_Bar') {
+      display_Bar(pageData)
+    }
+    else if (displayMode === 'mode_Card') {
+      display_Card(pageData)
+    }
   }
 
-  function listDisplay(data) {
-    let htmlContent = `<table>`
+  function display_Bar(data) {
+    let htmlContent = ''
     data.forEach(item => {
       htmlContent += `
-      
-        <tr>
-          <td>${item.title}</td>
-          <td>           
-          <button class="btn btn-primary btn-show-movie" data-toggle="modal" data-target="#show-movie-modal" data-id="${item.id}">More</button>
-          
-          <button class="btn btn-info btn-add-favorite" data-id="${item.id}">+</button>
-          </td>
-        </tr>
-      
-     `
+          <div class="col-6 barItem">${item.title}</div>
+            <div class="col-6 text-right mb-2">
+              <button class="btn btn-primary btn-show-movie" data-toggle="modal" data-target="#show-movie-modal" data-id="${item.id}">More</button>
+              <button class="btn btn-info btn-add-favorite" data-id="${item.id}">+</button>
+          </div>`
     })
-    htmlContent += `</table>`
     dataPanel.innerHTML = htmlContent
   }
 
-
-  function displayDataList(data) {
+  function display_Card(data) {
     let htmlContent = ''
     data.forEach(item => {
       htmlContent += `
